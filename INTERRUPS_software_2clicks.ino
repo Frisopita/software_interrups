@@ -13,52 +13,49 @@ Adafruit_APDS9960 apds;
 
 bool isReadSensorEnabled = true;
 int temp = 0;
-const int ledPin = 26; 
+const int ledPin = 26;
 unsigned long now = millis();
 unsigned long lastTrigger = 0;
 boolean startTimer = false;
 int lastGesture = -1;
-
+const int freq = 5000;
+const int ledChannel = 0;
+const int resolution = 8;
 
 void IRAM_ATTR detectsChange() {
-  digitalWrite(ledPin, HIGH);
+  ledcWrite(ledChannel, 255); 
   startTimer = true;
   lastTrigger = millis();
 }
 
-
 void setup() {
   Serial.begin(115200);
 
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, LOW);
-  
-  //wheater
+  ledcSetup(ledChannel, freq, resolution);
+  ledcAttachPin(ledPin, ledChannel);
+
+  // Wheater
   bool status1 = bme.begin(0x76);
   if (!status1) {
     Serial.println("Could not find a valid BME280 sensor, check wiring!");
-    while (1)
-      ;
+    while (1);
   } else {
     Serial.println("Valid BM280 sensor");
   }
 
-  //Gestos
+  // Gestos
   bool status2 = apds.begin(0x39);
   if (!status2) {
     Serial.println("Could not find a valid IR Gesture, check wiring!");
-    while (1)
-      ;
+    while (1);
   } else {
     Serial.println("Valid IR Gesture sensor");
   }
   apds.enableProximity(true);
   apds.enableGesture(true);
-
 }
 
 void loop() {
-  
   uint8_t gesture = apds.readGesture();
 
   if (gesture == APDS9960_DOWN) {
@@ -89,11 +86,10 @@ void loop() {
   }
   now = millis();
 
-  if(startTimer && (now - lastTrigger > (timeSeconds*1000)) && (temp<=28)) {
+  if (startTimer && (now - lastTrigger > (timeSeconds * 1000)) && (temp <= 28)) {
     Serial.println("Temperatura abajo de 28 \n");
-    digitalWrite(ledPin, LOW);
+    ledcWrite(ledChannel, 0);
     startTimer = false;
     isReadSensorEnabled = true;
   }
-  
 }
